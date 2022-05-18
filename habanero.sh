@@ -11,9 +11,11 @@
 module load cuda11.2/toolkit cuda11.2/blas cudnn8.1-cuda11.2
 module load anaconda
 pip install torch torchvision torch-scatter torch-sparse fairseq spacy
+git clone https://github.com/pytorch/fairseq
+cd fairseq && pip install --editable ./ && cd ..
 python -m spacy download en_core_web_trf
 git clone https://github.com/SapienzaNLP/ewiser.git
-cd ewiser && pip install -r requirements.txt && pip install -e .
+cd ewiser && pip install -r requirements.txt && pip install -e . && cd ..
 python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
 #Command to execute Python program
 python countObjects-ewiser.py dubliners.txt
