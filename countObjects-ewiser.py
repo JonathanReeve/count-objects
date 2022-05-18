@@ -64,7 +64,7 @@ if __name__ == "__main__":
     disambiguated = wsd(paras, nlp)
 
     logging.info(f'Counting artifacts ...')
-    artifact = wn.synsets('artifact')[0]
+    artifact = wn.synsets('object')[0]
     # print(artifact)
     artifacts = getArtifacts(disambiguated)
 
