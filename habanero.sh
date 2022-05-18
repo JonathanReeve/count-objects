@@ -10,7 +10,8 @@
 #SBATCH --mem-per-cpu=1gb # The memory the job will use per cpu core.
 module load cuda11.2/toolkit cuda11.2/blas cudnn8.1-cuda11.2
 module load anaconda
-pip install torch torchvision torch-scatter torch-sparse fairseq spacy
+pip install torch -f https://download.pytorch.org/whl/cpu/torch-1.11.0%2Bcpu-cp38-cp38-linux_x86_64.whl
+pip install torchvision torch-scatter torch-sparse -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html
 git clone https://github.com/pytorch/fairseq
 cd fairseq && pip install --editable ./ && cd ..
 python -m spacy download en_core_web_trf
