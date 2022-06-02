@@ -68,5 +68,6 @@ in pkgs.python3.buildEnv.override rec {
       statsmodels
       pywsd
       wn
+      scikit-learn
     ];
 }).env

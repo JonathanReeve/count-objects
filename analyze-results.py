@@ -7,6 +7,7 @@ import pandas as pd
 from plotly import express as px
 import argparse
 import json
+from glob import glob
 
 def parseResults(fn): 
     with open(fn) as f: 
@@ -55,21 +56,23 @@ def makeChart(colorWithCats, name):
     return df 
 
 
-def percentInCat(categorized, query): 
-    """ Calculate the percentage of a given category. 
-    The objects in this texts are X% objects, for instance." 
+def percentInCat(categorized, query, fn, wordCount):
+    """ Calculate the percentage of a given category.
+    The objects in this texts are X% objects, for instance."
     """
-    return len([l for l in categorized if query in l[2:]]) / len(categorized)
+    return len([l for l in categorized if query in l[2:]]) / wordCount
 
 
-def objectPercentages(categorized, cats=['artifact.n.01', 'living_thing.n.01', 'natural_object.n.01']): 
+def objectPercentages(categorized, fn, counts):
     out = {}
+    cats = ['artifact.n.01', 'living_thing.n.01', 'natural_object.n.01']
     for cat in cats: 
-        percent = percentInCat(categorized, cat)
+        percent = percentInCat(categorized, cat, fn, counts)
         out[cat] = percent
     return out
 
-def artifacts(categorized):
+
+def artifacts(categorized, fn, count):
     objects = {}
     for item in categorized:
         # Skip the first two, which aren't iterable
@@ -82,24 +85,38 @@ def artifacts(categorized):
                     objects[artifactHypo] += item[0]  # Sum all the counts
                 else:
                     objects[artifactHypo] = item[0]
-    return objects
+    # Divide by word counts
+    objectFrequencies = {}
+    for sense, n in objects.items():
+        objectFrequencies[sense] = (n / count) * 100
+    return objectFrequencies
 
-def macroStats(fn):
-    return {fn: objectPercentages(categorized)}
 
-def artifactHyponyms(fn):
-    return {fn: artifacts(categorized)}
+def main():
+    counts = json.load(open("wordCounts.json"))
+
+    allObjects = {}
+    allArtifacts = {}
+
+    allResults = glob('results/*')
+
+    for i, fn in enumerate(allResults):
+        print(f"Processing {fn}, {i} of {len(allResults)}")
+        basename = fn.split("/")[-1].strip(".json")
+        wordCount = counts[basename]
+        results = parseResults(fn)
+        stats = Counter([item[3] for item in results])
+        categorized = categorizeWords(stats)
+        # makeChart(categorized, fn)
+        allObjects[fn] = objectPercentages(categorized, fn, wordCount)
+        allArtifacts[fn] = artifacts(categorized, fn, wordCount)
+
+    with open("objects.json", 'w') as f:
+        json.dump(allObjects, f, indent=2)
+
+    with open("artifacts.json", 'w') as f:
+        json.dump(allArtifacts, f, indent=2)
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Count the number of objects in a text, according to their WordNet categories.")
-    parser.add_argument('filename')
-    parser.add_argument('--verbose', action='store_true', help="Print out everything")
-    parser.add_argument('--artifacts', action='store_true', help="Print out statistics about artifacts")
-    args = parser.parse_args()
-    fn = args.filename
-    results = parseResults(fn)
-    stats = Counter([item[3] for item in results])
-    categorized = categorizeWords(stats)
-    # results = macroStats(fn)
-    results = artifactHyponyms(fn)
-    print(json.dumps(results))
+    main()
