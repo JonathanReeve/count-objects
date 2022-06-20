@@ -1,0 +1,114 @@
+#+title: Analyze Results Cenlab
+
+
+#+begin_src jupyter-python :session py
+import pandas as pd
+import glob
+from collections import Counter
+from nltk.corpus import wordnet as wn
+import nltk
+import json
+#+end_src
+
+#+RESULTS:
+
+#+begin_src elisp
+(setq org-src-preserve-intendation t)
+#+end_src
+
+#+RESULTS:
+: t
+
+#+begin_src jupyter-python :session py
+results = glob.glob("results-cenlab/*")
+result = results[0]
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+def parseResults(fn):
+    with open(fn) as f:
+        raw = f.read()
+    split = raw.split()
+    parsed = []
+    for i, w in enumerate(split):
+        if '//' in w:
+            word, sense = w.split("//")
+            parsed.append((i, word, wn.synset(sense)))
+        else:
+            parsed.append((i, w, ""))
+    return parsed
+
+def categorizeWords(data, minDepth=5, maxDepth=0):
+    wordsAndCats = []
+    for word, val in data.items():
+        wordCat = [val, word]
+        depth = minDepth
+        while depth > maxDepth:
+            cat = getHypernymLevelN(word, depth).name()
+            wordCat.append(cat)
+            depth -= 1
+        wordsAndCats.append(wordCat)
+    return wordsAndCats
+
+def getHypernymLevelN(synset, n):
+    while synset.min_depth() > n:
+        hypernyms = synset.hypernyms()
+        if len(hypernyms) > 0:
+            synset = hypernyms[0]
+        else:
+            break
+    return synset
+
+
+def percentInCat(categorized, query):
+    """ Calculate the percentage of a given category.
+    The objects in this texts are X% objects, for instance."
+    """
+    return len([l for l in categorized if query in l[2:]]) / len(categorized)
+
+
+def objectPercentages(categorized, cats=['artifact.n.01', 'living_thing.n.01', 'natural_object.n.01']):
+    out = {}
+    for cat in cats:
+        percent = percentInCat(categorized, cat)
+        out[cat] = percent
+    return out
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+def main(fn):
+    parsed = parseResults(fn)
+    stats = Counter([item[2] for item in parsed if type(item[2]) == nltk.corpus.reader.wordnet.Synset])
+    categorized = categorizeWords(stats)
+    return objectPercentages(categorized)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+# type(parsed[1][2])
+allResults = {}
+for result in results:
+    allResults[result] = main(result)
+
+with open("objects-cenlab.json", 'w') as f:
+    json.dump(allResults, f)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+# [goto error]
+: [0;31m---------------------------------------------------------------------------[0m
+: [0;31mFileNotFoundError[0m                         Traceback (most recent call last)
+: [0;32m/tmp/ipykernel_768863/4140542035.py[0m in [0;36m<module>[0;34m[0m
+: [1;32m      4[0m     [0mallResults[0m[0;34m[[0m[0mresult[0m[0;34m][0m [0;34m=[0m [0mmain[0m[0;34m([0m[0mresult[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+: [1;32m      5[0m [0;34m[0m[0m
+: [0;32m----> 6[0;31m [0;32mwith[0m [0mopen[0m[0;34m([0m[0;34m"objects-cenlab.json"[0m[0;34m)[0m [0;32mas[0m [0mf[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+: [0m[1;32m      7[0m     [0mjson[0m[0;34m.[0m[0mdump[0m[0;34m([0m[0mallResults[0m[0;34m,[0m [0mf[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+:
+: [0;31mFileNotFoundError[0m: [Errno 2] No such file or directory: 'objects-cenlab.json'
+:END:
