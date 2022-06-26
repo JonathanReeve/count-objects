@@ -4,8 +4,8 @@
 We have to get word counts from all these texts, using Spacy, since that's what we're using
 in the WSD, and in order to get object counts, we need object percentages.
 """
+
 import spacy
-import argparse
 import glob
 import json
 

@@ -1,0 +1,48 @@
+
+#+begin_src jupyter-python :session py3
+import pandas as pd
+import parsy
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+# [goto error]
+: [0;31m---------------------------------------------------------------------------[0m
+: [0;31mModuleNotFoundError[0m                       Traceback (most recent call last)
+: [0;32m/run/user/1000/ipykernel_92958/3881333454.py[0m in [0;36m<module>[0;34m[0m
+: [1;32m      1[0m [0;32mimport[0m [0mpandas[0m [0;32mas[0m [0mpd[0m[0;34m[0m[0;34m[0m[0m
+: [0;32m----> 2[0;31m [0;32mimport[0m [0mparsy[0m[0;34m[0m[0;34m[0m[0m
+: [0m
+: [0;31mModuleNotFoundError[0m: No module named 'parsy'
+:END:
+
+#+begin_src jupyter-python :session py3
+%pwd
+#+end_src
+
+#+RESULTS:
+: /home/jon/Dokumentujo/Columbia/Dissertation/04-shapes/count-objects
+
+#+begin_src jupyter-python :session py3
+%cd ~/Dokumentujo/Columbia/Dissertation/04-shapes/count-objects
+#+end_src
+
+#+RESULTS:
+: /home/jon/Dokumentujo/Columbia/Dissertation/04-shapes/count-objects
+
+#+begin_src jupyter-python :session py3
+with open('results/1900-WildeOscar-SelectedProseofOscarWilde-1338.0.json') as f:
+  results = f.read()
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py3
+resultsLines = results.split("\n")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py3
+objects = eval(resultsLines[0])
+#+end_src

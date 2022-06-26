@@ -1,0 +1,130 @@
+#+title: Analyze Results: PG2
+
+
+#+begin_src jupyter-python :session py
+import pandas as pd
+import glob
+from collections import Counter
+from nltk.corpus import wordnet as wn
+import nltk
+import json
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+results = glob.glob("results-pg2/*")
+result = results[0]
+results[:10]
+#+end_src
+
+#+RESULTS:
+| results-pg2/1897-AudreyCraven-29766.0.txt-annotated.txt | results-pg2/18721130-FrankMildmayOrTheNavalOfficer-13010.0.txt-annotated.txt | results-pg2/1907-TheWhiteHandandtheBlackAStoryoftheNatal-32911.0.txt-annotated.txt | results-pg2/results-pg2 | results-pg2/1865-AlicesAbenteuerimWunderland-19778.0.txt-annotated.txt | results-pg2/188911-ThePoeticalWorksofThomasHood-15652.0.txt-annotated.txt | results-pg2/1893-NovelNotes-2037.0.txt-annotated.txt | results-pg2/1912-OscarWildeaCriticalStudy-36017.0.txt-annotated.txt | results-pg2/1868-TheSeaboardParishComplete-8562.0.txt-annotated.txt | results-pg2/1896-AWomanIntervenes-9379.0.txt-annotated.txt |
+
+#+begin_src jupyter-python :session py
+def parseResults(fn):
+    with open(fn) as f:
+        raw = f.read()
+    split = raw.split()
+    parsed = []
+    for i, w in enumerate(split):
+        if '//' in w:
+            try:
+                word, sense = w.split("//")
+                parsed.append((i, word, wn.synset(sense)))
+            except:
+                print(f"Something went wrong while parsing word {w}")
+                parsed.append((i, w, ""))
+        else:
+            parsed.append((i, w, ""))
+    return parsed
+
+def categorizeWords(data, minDepth=5, maxDepth=0):
+    wordsAndCats = []
+    for word, val in data.items():
+        wordCat = [val, word]
+        depth = minDepth
+        while depth > maxDepth:
+            cat = getHypernymLevelN(word, depth).name()
+            wordCat.append(cat)
+            depth -= 1
+        wordsAndCats.append(wordCat)
+    return wordsAndCats
+
+def getHypernymLevelN(synset, n):
+    while synset.min_depth() > n:
+        hypernyms = synset.hypernyms()
+        if len(hypernyms) > 0:
+            synset = hypernyms[0]
+        else:
+            break
+    return synset
+
+
+def percentInCat(categorized, query):
+    """ Calculate the percentage of a given category.
+    The objects in this texts are X% objects, for instance."
+    """
+    return len([l for l in categorized if query in l[2:]]) / len(categorized)
+
+
+def objectPercentages(categorized, cats=['artifact.n.01', 'living_thing.n.01', 'natural_object.n.01']):
+    out = {}
+    for cat in cats:
+        percent = percentInCat(categorized, cat)
+        out[cat] = percent
+    return out
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+def main(fn):
+    parsed = parseResults(fn)
+    stats = Counter([item[2] for item in parsed if type(item[2]) == nltk.corpus.reader.wordnet.Synset])
+    categorized = categorizeWords(stats)
+    return objectPercentages(categorized)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+# type(parsed[1][2])
+allResults = {}
+for result in results:
+    allResults[result] = main(result)
+
+with open("objects-pg2.json", 'w') as f:
+    json.dump(allResults, f)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+# [goto error]
+#+begin_example
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mIsADirectoryError[0m                         Traceback (most recent call last)
+[0;32m/tmp/ipykernel_88596/267173921.py[0m in [0;36m<module>[0;34m[0m
+[1;32m      2[0m [0mallResults[0m [0;34m=[0m [0;34m{[0m[0;34m}[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      3[0m [0;32mfor[0m [0mresult[0m [0;32min[0m [0mresults[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[0;32m----> 4[0;31m     [0mallResults[0m[0;34m[[0m[0mresult[0m[0;34m][0m [0;34m=[0m [0mmain[0m[0;34m([0m[0mresult[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m      5[0m [0;34m[0m[0m
+[1;32m      6[0m [0;32mwith[0m [0mopen[0m[0;34m([0m[0;34m"objects-pg2.json"[0m[0;34m,[0m [0;34m'w'[0m[0;34m)[0m [0;32mas[0m [0mf[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+
+[0;32m/tmp/ipykernel_88596/472436514.py[0m in [0;36mmain[0;34m(fn)[0m
+[1;32m      1[0m [0;32mdef[0m [0mmain[0m[0;34m([0m[0mfn[0m[0;34m)[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[0;32m----> 2[0;31m     [0mparsed[0m [0;34m=[0m [0mparseResults[0m[0;34m([0m[0mfn[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m      3[0m     [0mstats[0m [0;34m=[0m [0mCounter[0m[0;34m([0m[0;34m[[0m[0mitem[0m[0;34m[[0m[0;36m2[0m[0;34m][0m [0;32mfor[0m [0mitem[0m [0;32min[0m [0mparsed[0m [0;32mif[0m [0mtype[0m[0;34m([0m[0mitem[0m[0;34m[[0m[0;36m2[0m[0;34m][0m[0;34m)[0m [0;34m==[0m [0mnltk[0m[0;34m.[0m[0mcorpus[0m[0;34m.[0m[0mreader[0m[0;34m.[0m[0mwordnet[0m[0;34m.[0m[0mSynset[0m[0;34m][0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      4[0m     [0mcategorized[0m [0;34m=[0m [0mcategorizeWords[0m[0;34m([0m[0mstats[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      5[0m     [0;32mreturn[0m [0mobjectPercentages[0m[0;34m([0m[0mcategorized[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+
+[0;32m/tmp/ipykernel_88596/1660637458.py[0m in [0;36mparseResults[0;34m(fn)[0m
+[1;32m      1[0m [0;32mdef[0m [0mparseResults[0m[0;34m([0m[0mfn[0m[0;34m)[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[0;32m----> 2[0;31m     [0;32mwith[0m [0mopen[0m[0;34m([0m[0mfn[0m[0;34m)[0m [0;32mas[0m [0mf[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m      3[0m         [0mraw[0m [0;34m=[0m [0mf[0m[0;34m.[0m[0mread[0m[0;34m([0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      4[0m     [0msplit[0m [0;34m=[0m [0mraw[0m[0;34m.[0m[0msplit[0m[0;34m([0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m      5[0m     [0mparsed[0m [0;34m=[0m [0;34m[[0m[0;34m][0m[0;34m[0m[0;34m[0m[0m
+
+[0;31mIsADirectoryError[0m: [Errno 21] Is a directory: 'results-pg2/results-pg2'
+#+end_example
+:END:

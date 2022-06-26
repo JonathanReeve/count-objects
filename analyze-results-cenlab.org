@@ -1,4 +1,4 @@
-#+title: Analyze Results Cenlab
+#+title: Analyze Results: Cenlab
 
 
 #+begin_src jupyter-python :session py
@@ -11,13 +11,6 @@ import json
 #+end_src
 
 #+RESULTS:
-
-#+begin_src elisp
-(setq org-src-preserve-intendation t)
-#+end_src
-
-#+RESULTS:
-: t
 
 #+begin_src jupyter-python :session py
 results = glob.glob("results-cenlab/*")
@@ -100,15 +93,3 @@ with open("objects-cenlab.json", 'w') as f:
 #+end_src
 
 #+RESULTS:
-:RESULTS:
-# [goto error]
-: [0;31m---------------------------------------------------------------------------[0m
-: [0;31mFileNotFoundError[0m                         Traceback (most recent call last)
-: [0;32m/tmp/ipykernel_768863/4140542035.py[0m in [0;36m<module>[0;34m[0m
-: [1;32m      4[0m     [0mallResults[0m[0;34m[[0m[0mresult[0m[0;34m][0m [0;34m=[0m [0mmain[0m[0;34m([0m[0mresult[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
-: [1;32m      5[0m [0;34m[0m[0m
-: [0;32m----> 6[0;31m [0;32mwith[0m [0mopen[0m[0;34m([0m[0;34m"objects-cenlab.json"[0m[0;34m)[0m [0;32mas[0m [0mf[0m[0;34m:[0m[0;34m[0m[0;34m[0m[0m
-: [0m[1;32m      7[0m     [0mjson[0m[0;34m.[0m[0mdump[0m[0;34m([0m[0mallResults[0m[0;34m,[0m [0mf[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
-:
-: [0;31mFileNotFoundError[0m: [Errno 2] No such file or directory: 'objects-cenlab.json'
-:END:
