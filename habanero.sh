@@ -12,5 +12,5 @@
 module load cuda11.2/toolkit cuda11.2/blas cudnn8.1-cuda11.2
 module load anaconda
 #Command to execute Python program
-python3 countObjects-annotate.py cenlab/texts
+python3 countObjects-annotate.py corpus-pg-3
 #End of script
