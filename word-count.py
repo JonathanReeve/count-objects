@@ -13,7 +13,7 @@ nlp = spacy.load('en_core_web_lg', exclude=['ner', 'tagger', 'parser', 'lemmatiz
 
 nlp.max_length = 10000000
 
-texts = glob.glob("/home/jon/Dokumentujo/Research/Corpora/pg-text/*")
+texts = glob.glob("pg-text4/*")
 
 wordCounts = {}
 
@@ -25,5 +25,5 @@ for i, text in enumerate(texts):
     basename = text.split('/')[-1]
     wordCounts[basename] = int(len(doc))
 
-with open('wordCounts.json', 'w') as f:
+with open('wordCounts4.json', 'w') as f:
     json.dump(wordCounts, f)

@@ -69,5 +69,6 @@ in pkgs.python3.buildEnv.override rec {
       pywsd
       wn
       scikit-learn
+      scikitimage
     ];
 }).env
