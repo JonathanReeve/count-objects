@@ -1,0 +1,175 @@
+#+title: Analyze Results: PG2
+
+
+#+begin_src jupyter-python :session py
+import pandas as pd
+import glob
+from collections import Counter
+from nltk.corpus import wordnet as wn
+import nltk
+import json
+from plotly import express as px
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+results = glob.glob("results-pg3/*")
+result = results[0]
+results[:10]
+#+end_src
+
+#+RESULTS:
+| results-pg3/1897-AudreyCraven-29766.0.txt-annotated.txt | results-pg3/18721130-FrankMildmayOrTheNavalOfficer-13010.0.txt-annotated.txt | results-pg3/1907-TheWhiteHandandtheBlackAStoryoftheNatal-32911.0.txt-annotated.txt | results-pg3/188911-ThePoeticalWorksofThomasHood-15652.0.txt-annotated.txt | results-pg3/1893-NovelNotes-2037.0.txt-annotated.txt | results-pg3/1912-OscarWildeaCriticalStudy-36017.0.txt-annotated.txt | results-pg3/1868-TheSeaboardParishComplete-8562.0.txt-annotated.txt | results-pg3/1896-AWomanIntervenes-9379.0.txt-annotated.txt | results-pg3/1905-MoreMisrepresentativeMen-36782.0.txt-annotated.txt | results-pg3/1895-ADoctoroftheOldSchoolVolume5-9319.0.txt-annotated.txt |
+
+#+begin_src jupyter-python :session py
+def parseResults(fn):
+    with open(fn) as f:
+        raw = f.read()
+    split = raw.split()
+    parsed = []
+    for i, w in enumerate(split):
+        if '//' in w:
+            try:
+                word, sense = w.split("//")
+                parsed.append((i, word, wn.synset(sense)))
+            except:
+                print(f"Something went wrong while parsing word {w}")
+                parsed.append((i, w, ""))
+        else:
+            parsed.append((i, w, ""))
+    return parsed
+
+def categorizeWords(data, minDepth=5, maxDepth=0):
+    wordsAndCats = []
+    for word, val in data.items():
+        wordCat = [val, word]
+        depth = minDepth
+        while depth > maxDepth:
+            cat = getHypernymLevelN(word, depth).name()
+            wordCat.append(cat)
+            depth -= 1
+        wordsAndCats.append(wordCat)
+    return wordsAndCats
+
+def getHypernymLevelN(synset, n):
+    while synset.min_depth() > n:
+        hypernyms = synset.hypernyms()
+        if len(hypernyms) > 0:
+            synset = hypernyms[0]
+        else:
+            break
+    return synset
+
+
+def percentInCat(categorized, query):
+    """ Calculate the percentage of a given category.
+    The objects in this texts are X% objects, for instance."
+    """
+    return len([l for l in categorized if query in l[2:]]) / len(categorized)
+
+
+def objectPercentages(categorized, cats=['artifact.n.01', 'living_thing.n.01', 'natural_object.n.01']):
+    out = {}
+    for cat in cats:
+        percent = percentInCat(categorized, cat)
+        out[cat] = percent
+    return out
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+bodyPartHyponyms = [hyponym.name() for hyponym in wn.synset('body_part.n.01').hyponyms()]
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+def main(fn):
+    parsed = parseResults(fn)
+    stats = Counter([item[2] for item in parsed if type(item[2]) == nltk.corpus.reader.wordnet.Synset])
+    categorized = categorizeWords(stats)
+    bodyParts = [w for w in categorized if 'body_part.n.01' in w[2:]]
+    for w in bodyParts:
+        w[1] = w[1].name() # Use string form instead of synset for serializing
+    return bodyParts
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session py
+print(main(results[0]))
+#+end_src
+
+
+#+begin_src jupyter-python :session py :async yes
+allResults = {}
+for result in results:
+    allResults[result] = main(result)
+
+with open("body-parts-pg3.json", 'w') as f:
+    json.dump(allResults, f)
+#+end_src
+
+#+RESULTS:
+
+* DONE make these synsets json-serializable by converting them to strings
+:LOGBOOK:
+CLOCK: [2022-06-28 mar 10:03]--[2022-06-28 mar 11:14] =>  1:11
+:END:
+* TODO make a chart
+:LOGBOOK:
+CLOCK: [2022-06-28 mar 11:14]--[2022-06-28 mar 12:55] =>  1:41
+:END:
+
+#+begin_src jupyter-python :session py
+
+def makeChart(colorWithCats, name):
+    df = pd.DataFrame(colorWithCats) # columns=cols)
+    #print(df)
+    fig = px.treemap(df, path=df.columns[-1:0:-1],
+                     values=0,
+                     color=0,
+                     #color_continuous_scale=getColorScale(name),
+                     color_continuous_midpoint=df[0].mean(),
+                     title='Breakdown of objects in ' + name
+                     )
+    with open(name+'.html', 'w') as f:
+        f.write(fig.to_html())
+    return df
+
+test = allResults['results-pg3/1897-AudreyCraven-29766.0.txt-annotated.txt']
+df = makeChart(test, 'test')
+#+end_src
+
+#+RESULTS:
+#+begin_example
+     0                1                        2               3          4  \
+0    1  tuberosity.n.01             process.n.05  body_part.n.01  part.n.03
+1    5       mouth.n.02           structure.n.04  body_part.n.01  part.n.03
+2    3     process.n.05             process.n.05  body_part.n.01  part.n.03
+3    1         toe.n.01  external_body_part.n.01  body_part.n.01  part.n.03
+4   18      finger.n.01  external_body_part.n.01  body_part.n.01  part.n.03
+..  ..              ...                      ...             ...        ...
+66   1       udder.n.01               organ.n.01  body_part.n.01  part.n.03
+67   1        caul.n.02              tissue.n.01  body_part.n.01  part.n.03
+68   1        foot.n.06               organ.n.01  body_part.n.01  part.n.03
+69   2        lung.n.01               organ.n.01  body_part.n.01  part.n.03
+70   1      breast.n.01  external_body_part.n.01  body_part.n.01  part.n.03
+
+             5                     6
+0   thing.n.12  physical_entity.n.01
+1   thing.n.12  physical_entity.n.01
+2   thing.n.12  physical_entity.n.01
+3   thing.n.12  physical_entity.n.01
+4   thing.n.12  physical_entity.n.01
+..         ...                   ...
+66  thing.n.12  physical_entity.n.01
+67  thing.n.12  physical_entity.n.01
+68  thing.n.12  physical_entity.n.01
+69  thing.n.12  physical_entity.n.01
+70  thing.n.12  physical_entity.n.01
+
+[71 rows x 7 columns]
+#+end_example
