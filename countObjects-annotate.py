@@ -12,9 +12,9 @@ logging.basicConfig(level=logging.INFO)
 
 
 def wsdWarmup():
-    wsd = Disambiguator('ewiser/bin/ewiser.semcor+wngt.pt', lang='en',
+    wsd = Disambiguator('../ewiser/bin/ewiser.semcor+wngt.pt', lang='en',
                 batch_size=5, save_wsd_details=False).eval()
-    wsd = wsd.to('cuda')
+    wsd = wsd.to('cpu')
     nlp = spacy.load('en_core_web_trf', disable=['ner', 'parser'])
     wsd.enable(nlp, 'wsd')
     return nlp
